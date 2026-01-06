@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import crypto from 'crypto'
 
 const AUTH_COOKIE = 'stream_session'
-const SESSION_SECRET = process.env.AUTH_SECRET || 'default-secret-change-me'
+const SESSION_SECRET = 'stream-app-session-signing-key-2024'
 
 export interface Session {
   userId: string

@@ -31,7 +31,6 @@ Create a `.env.local` file:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-AUTH_SECRET=your_secret_password_here
 ```
 
 ### 3. Install Dependencies
@@ -55,16 +54,15 @@ Open [http://localhost:3000](http://localhost:3000) to see the demo mode.
 3. Add environment variables in Vercel's project settings:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `AUTH_SECRET`
 4. Deploy!
 
 ## Authentication
 
-The app uses a simple password-based authentication:
+The app uses username/password authentication:
 
 1. Visit the app (you'll see demo mode)
-2. Enter your password (the value of `AUTH_SECRET`)
-3. A cookie is set that persists for 1 year
+2. Create an account or sign in
+3. A session cookie is set that persists for 1 year
 4. You won't need to log in again on that browser
 
 ## Tech Stack

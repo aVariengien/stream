@@ -8,13 +8,16 @@ export function getSupabase(): SupabaseClient {
   }
   
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseKey = process.env.NEXT_PUBLIC_KEY
   
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseKey) {
     throw new Error('Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.')
   }
+
+  console.log('supabaseUrl', supabaseUrl)
+  console.log('supabaseKey', supabaseKey)
   
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
+  supabaseInstance = createClient(supabaseUrl, supabaseKey)
   return supabaseInstance
 }
 

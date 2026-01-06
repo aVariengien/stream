@@ -4,7 +4,7 @@ import { getSupabase } from '@/lib/supabase'
 import crypto from 'crypto'
 
 const AUTH_COOKIE = 'stream_session'
-const SESSION_SECRET = process.env.AUTH_SECRET || 'default-secret-change-me'
+const SESSION_SECRET = 'stream-app-session-signing-key-2024'
 
 // Simple password hashing using SHA-256 with salt
 function hashPassword(password: string, salt: string): string {

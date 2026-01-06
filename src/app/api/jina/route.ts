@@ -1,14 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-
-const AUTH_COOKIE = 'stream_auth'
-const AUTH_SECRET = process.env.AUTH_SECRET || 'default-secret-change-me'
-
-async function isAuthenticated() {
-  const cookieStore = await cookies()
-  const authCookie = cookieStore.get(AUTH_COOKIE)
-  return authCookie?.value === AUTH_SECRET
-}
 
 export async function GET(request: NextRequest) {
   // Allow demo users to read articles too
