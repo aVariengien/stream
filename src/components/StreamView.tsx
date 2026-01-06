@@ -59,6 +59,16 @@ export function StreamView({ initialAuth, initialUsername }: StreamViewProps) {
       if (res.ok) {
         const data = await res.json()
         setArticles(data)
+      } else if (res.status === 401) {
+        // Session expired or invalid - switch to demo mode
+        setIsAuthenticated(false)
+        setUsername('')
+        const demo = demoArticles.map((a, i) => ({
+          ...a,
+          id: `demo-${i}`,
+          created_at: new Date().toISOString(),
+        })) as Article[]
+        setArticles(demo)
       }
     } catch (error) {
       console.error('Failed to load articles:', error)
