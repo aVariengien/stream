@@ -158,15 +158,3 @@ export async function DELETE() {
   cookieStore.delete(AUTH_COOKIE)
   return NextResponse.json({ success: true })
 }
-
-// Helper to get current user from request (for use in other API routes)
-export async function getCurrentUser(): Promise<{ userId: string; username: string } | null> {
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get(AUTH_COOKIE)
-  
-  if (!sessionCookie?.value) {
-    return null
-  }
-
-  return verifySessionToken(sessionCookie.value)
-}
