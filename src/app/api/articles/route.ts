@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { getSession } from '@/lib/auth'
 import { urlToSeed } from '@/lib/utils'
+import { getOrCreateSettings } from '@/lib/settings'
+import { fetchJinaMarkdown } from '@/lib/jina'
+import { chunkText } from '@/lib/chunker'
 
 export async function GET() {
   const session = await getSession()
@@ -159,6 +162,26 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Supabase insert error:', error)
       return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+    }
+
+    try {
+      const settings = await getOrCreateSettings(session.userId)
+      const markdown = await fetchJinaMarkdown(url)
+      const chunks = chunkText(markdown, settings.chunk_size)
+
+      if (chunks.length > 0) {
+        const payload = chunks.map((chunk, index) => ({
+          article_id: data.id,
+          user_id: session.userId,
+          chunk_index: index,
+          content: chunk.content,
+          word_count: chunk.wordCount,
+        }))
+        await getSupabase().from('chunks').insert(payload)
+      }
+    } catch (chunkingError) {
+      // Keep article creation resilient if chunking fails.
+      console.error('Chunk generation failed:', chunkingError)
     }
 
     return NextResponse.json(data)

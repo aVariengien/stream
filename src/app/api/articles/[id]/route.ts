@@ -19,9 +19,7 @@ export async function PATCH(
 
     if (body.status !== undefined) {
       updates.status = body.status
-      if (body.status === 'river') {
-        updates.moved_to_river_at = new Date().toISOString()
-      } else if (body.status === 'ocean') {
+      if (body.status === 'ocean') {
         updates.moved_to_ocean_at = new Date().toISOString()
       }
     }

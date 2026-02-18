@@ -14,23 +14,20 @@ interface ArticleCardProps {
     image_url?: string
     generated_image_url?: string
     gradient_seed?: number
-    status: 'cloud' | 'river' | 'ocean'
+    status: 'cloud' | 'ocean'
     reading_progress: number
     notes?: string
     unread_reason?: string
     finished?: boolean
     created_at?: string
-    moved_to_river_at?: string
     moved_to_ocean_at?: string
   }
   onClick?: () => void
-  onMoveToRiver?: () => void
-  onMoveToCloud?: () => void
   onMoveToOcean?: (finished: boolean, notes?: string, reason?: string) => void
   onDelete?: () => void
   showActions?: boolean
   isDemo?: boolean
-  activeTab?: 'cloud' | 'river' | 'ocean'
+  activeTab?: 'cloud' | 'ocean'
 }
 
 function formatDate(dateString?: string): string {
@@ -51,13 +48,11 @@ function formatDate(dateString?: string): string {
 export function ArticleCard({
   article,
   onClick,
-  onMoveToRiver,
-  onMoveToCloud,
   onMoveToOcean,
   onDelete,
   showActions = true,
   isDemo = false,
-  activeTab = 'river',
+  activeTab = 'cloud',
 }: ArticleCardProps) {
   const [imageError, setImageError] = useState(false)
   const seed = article.gradient_seed ?? urlToSeed(article.url)
@@ -72,8 +67,6 @@ export function ArticleCard({
     switch (activeTab) {
       case 'cloud':
         return art.created_at ? `Added ${formatDate(art.created_at)}` : ''
-      case 'river':
-        return art.moved_to_river_at ? `Started ${formatDate(art.moved_to_river_at)}` : (art.created_at ? `Added ${formatDate(art.created_at)}` : '')
       case 'ocean':
         return art.moved_to_ocean_at ? `Archived ${formatDate(art.moved_to_ocean_at)}` : ''
       default:
@@ -166,17 +159,17 @@ export function ArticleCard({
               </button>
             )}
             
-            {onMoveToRiver && (
+            {onMoveToOcean && (
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  onMoveToRiver()
+                  onMoveToOcean(true)
                 }}
                 className="w-7 h-7 flex items-center justify-center bg-paper border border-ink/20 text-ash hover:text-ink hover:border-ink transition-all text-xs"
-                aria-label="Resurface to River"
-                title="Resurface"
+                aria-label="Move to ocean"
+                title="Move to ocean"
               >
-                ↩
+                ⇢
               </button>
             )}
           </div>
@@ -185,7 +178,7 @@ export function ArticleCard({
     )
   }
   
-  // Vertical layout for Cloud/River articles
+  // Vertical layout for Cloud articles
   return (
     <article 
       className="group relative border border-ink/10 bg-paper hover:border-ink/30 transition-all duration-300 cursor-pointer"
@@ -233,15 +226,6 @@ export function ArticleCard({
           <MeshGradient seed={seed} className="w-full h-full" />
         )}
         
-        {/* Reading progress bar */}
-        {article.status === 'river' && article.reading_progress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-ink/10">
-            <div 
-              className="h-full bg-ink transition-all duration-300"
-              style={{ width: `${article.reading_progress}%` }}
-            />
-          </div>
-        )}
       </div>
       
       {/* Content */}
@@ -281,23 +265,13 @@ export function ArticleCard({
             Read
           </button>
           
-          {/* Move to River - for cloud articles */}
-          {article.status === 'cloud' && onMoveToRiver && (
+          {/* Move to Ocean - for cloud articles */}
+          {article.status === 'cloud' && onMoveToOcean && (
             <button
-              onClick={onMoveToRiver}
+              onClick={() => onMoveToOcean(true)}
               className="px-4 py-2 text-xs border border-ink bg-paper hover:bg-ink hover:text-paper transition-colors"
             >
-              → River
-            </button>
-          )}
-          
-          {/* Move to Cloud - for river articles */}
-          {article.status === 'river' && onMoveToCloud && (
-            <button
-              onClick={onMoveToCloud}
-              className="px-4 py-2 text-xs border border-ink bg-paper hover:bg-ink hover:text-paper transition-colors"
-            >
-              ← Cloud
+              → Ocean
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { fetchJinaMarkdown } from '@/lib/jina'
 
 export async function GET(request: NextRequest) {
   // Allow demo users to read articles too
@@ -9,31 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Use Jina Reader API to get markdown content
-    const jinaUrl = `https://r.jina.ai/${url}`
-    
-    const response = await fetch(jinaUrl, {
-      headers: {
-        'Accept': 'text/markdown',
-      },
-      signal: AbortSignal.timeout(30000), // 30 second timeout
-    })
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch article content' },
-        { status: response.status }
-      )
-    }
-
-    let content = await response.text()
-
-    // Strip Jina metadata header if present
-    const markdownContentMatch = content.match(/Markdown Content:\s*\n([\s\S]*)/)
-    if (markdownContentMatch) {
-      content = markdownContentMatch[1].trim()
-    }
-
+    const content = await fetchJinaMarkdown(url)
     return NextResponse.json({ content })
   } catch (error) {
     console.error('Jina fetch error:', error)

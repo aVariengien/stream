@@ -3,10 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --ink: #0a0a0a;
-  --paper: #fafafa;
-  --smoke: #e5e5e5;
-  --ash: #737373;
+  --ink: #2f2a26;
+  --paper: #f8f2ea;
+  --card: #fffdf9;
+  --smoke: #efe5d9;
+  --ash: #7a6f66;
+  --line: #dfd3c3;
+  --teal: #5bb5a2;
 }
 
 * {
@@ -114,7 +117,7 @@ body {
 }
 
 .article-content blockquote {
-  border-left: 2px solid var(--ink);
+  border-left: 2px solid var(--line);
   padding-left: 1rem;
   margin: 1.5rem 0;
   font-style: italic;
@@ -122,8 +125,8 @@ body {
 }
 
 .article-content pre {
-  background: var(--ink);
-  color: var(--paper);
+  background: #3c332e;
+  color: #fefcf8;
   padding: 1rem;
   border-radius: 4px;
   overflow-x: auto;
