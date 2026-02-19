@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { marked } from 'marked'
 
 export type FeedChunk = {
+  feed_item_id: string
   chunk_id: string
   article_id: string
   article_title: string

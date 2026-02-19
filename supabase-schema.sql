@@ -157,6 +157,27 @@ CREATE POLICY "Allow all operations" ON user_settings
   USING (true)
   WITH CHECK (true);
 
+-- Migration: Stable feed ordering
+--
+-- Run these statements in Supabase SQL editor to add stable ordering to feed_items
+-- and create the user_feed_state table used for position tracking.
+--
+-- 1. Add a sequential position column to feed_items:
+-- CREATE SEQUENCE IF NOT EXISTS feed_items_position_seq;
+-- ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS position BIGINT DEFAULT nextval('feed_items_position_seq');
+-- UPDATE feed_items SET position = nextval('feed_items_position_seq') WHERE position IS NULL;
+-- ALTER TABLE feed_items ALTER COLUMN position SET NOT NULL;
+-- CREATE INDEX IF NOT EXISTS idx_feed_items_user_position ON feed_items(user_id, position ASC);
+--
+-- 2. Create user_feed_state table (tracks each user's reading cursor):
+-- CREATE TABLE IF NOT EXISTS user_feed_state (
+--   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE PRIMARY KEY,
+--   last_seen_feed_item_id UUID REFERENCES feed_items(id) ON DELETE SET NULL,
+--   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- );
+-- ALTER TABLE user_feed_state ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY "Allow all operations" ON user_feed_state FOR ALL USING (true) WITH CHECK (true);
+--
 -- Migration: If you already have the articles table, run these commands:
 -- 
 -- 1. Create users table:
