@@ -126,13 +126,14 @@ export async function scoreChunksBatch(
   }
 }
 
-export async function generateChunkContext(
+export async function streamChunkContext(
   chunkText: string,
   fullDocument: string,
   model: string
-): Promise<string> {
-  const response = await callChatCompletion({
+): Promise<AsyncIterable<string>> {
+  const stream = await getClient().chat.completions.create({
     model,
+    stream: true,
     temperature: 0.2,
     max_completion_tokens: 800,
     messages: [
@@ -146,7 +147,16 @@ export async function generateChunkContext(
         content: `${chunkText}\n\n${fullDocument}`,
       },
     ],
-  })
+  } as never) as AsyncIterable<{
+    choices?: Array<{ delta?: { content?: string | null } }>
+  }>
 
-  return response.choices?.[0]?.message?.content?.trim() || 'No context generated.'
+  async function* textChunks() {
+    for await (const chunk of stream) {
+      const text = chunk.choices?.[0]?.delta?.content
+      if (text) yield text
+    }
+  }
+
+  return textChunks()
 }

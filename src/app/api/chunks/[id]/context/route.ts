@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { getSupabase } from '@/lib/supabase'
 import { fetchJinaMarkdown } from '@/lib/jina'
-import { generateChunkContext } from '@/lib/cerebras'
+import { streamChunkContext } from '@/lib/cerebras'
 import { getOrCreateSettings } from '@/lib/settings'
 
 export async function GET(
@@ -42,8 +42,21 @@ export async function GET(
 
     const settings = await getOrCreateSettings(session.userId)
     const fullMarkdown = await fetchJinaMarkdown(article.url)
-    const context = await generateChunkContext(chunk.content, fullMarkdown, settings.context_model)
-    return NextResponse.json({ context })
+    const textStream = await streamChunkContext(chunk.content, fullMarkdown, settings.context_model)
+
+    const encoder = new TextEncoder()
+    const readable = new ReadableStream({
+      async start(controller) {
+        for await (const text of textStream) {
+          controller.enqueue(encoder.encode(text))
+        }
+        controller.close()
+      },
+    })
+
+    return new Response(readable, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to generate context' },

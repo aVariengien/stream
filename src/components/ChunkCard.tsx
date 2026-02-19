@@ -69,11 +69,18 @@ export function ChunkCard({
     setError('')
     try {
       const response = await fetch(`/api/chunks/${item.chunk_id}/context`)
-      const payload = await response.json()
       if (!response.ok) {
+        const payload = await response.json() as { error?: string }
         throw new Error(payload.error || 'Failed to load context')
       }
-      setContext(payload.context || '')
+      const reader = response.body!.getReader()
+      const decoder = new TextDecoder()
+      setContextLoading(false)
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        setContext((prev) => prev + decoder.decode(value, { stream: true }))
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load context')
     } finally {
@@ -163,7 +170,12 @@ export function ChunkCard({
       {showContext && (
         <div className="mt-4 rounded-xl border border-warmLine bg-paper px-4 py-3 text-sm text-ink">
           {contextLoading && <p className="text-ash">Generating context...</p>}
-          {!contextLoading && context && <pre className="whitespace-pre-wrap font-sans">{context}</pre>}
+          {context && (
+            <div
+              className="article-content"
+              dangerouslySetInnerHTML={{ __html: marked.parse(context, { async: false }) as string }}
+            />
+          )}
         </div>
       )}
 
