@@ -25,6 +25,10 @@ export function FeedView({ onDoneWithSource, onViewDocument }: FeedViewProps) {
   const [hasBefore, setHasBefore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
 
+  const [rerolling, setRerolling] = useState(false)
+  // Which inter-card separator is showing the ↺ button (feed_item_id of the item above the gap)
+  const [activeSeparatorId, setActiveSeparatorId] = useState<string | null>(null)
+
   const replenishInFlight = useRef(false)
   // Tracks which feed_item_id is at the top of the viewport (for position saving)
   const topItemIdRef = useRef<string | null>(null)
@@ -53,6 +57,38 @@ export function FeedView({ onDoneWithSource, onViewDocument }: FeedViewProps) {
       })
     }, 800)
   }, [])
+
+  // ── Reroll: discard future queue and re-score from a given item ───────────
+  const reroll = useCallback(async (fromFeedItemId?: string) => {
+    if (rerolling) return
+    setRerolling(true)
+    setActiveSeparatorId(null)
+    setError('')
+    try {
+      const res = await fetch('/api/feed/reroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from_feed_item_id: fromFeedItemId ?? topItemIdRef.current }),
+      })
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error || 'Failed to reroll')
+
+      // Keep only items up to and including the cut point
+      const cutId = fromFeedItemId ?? topItemIdRef.current
+      setItems((prev) => {
+        if (!cutId) return prev
+        const idx = prev.findIndex((item) => item.feed_item_id === cutId)
+        return idx >= 0 ? prev.slice(0, idx + 1) : prev
+      })
+      setHasMore(true)
+
+      void replenish()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to reroll feed')
+    } finally {
+      setRerolling(false)
+    }
+  }, [rerolling, replenish])
 
   // ── Initial load ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -226,20 +262,37 @@ export function FeedView({ onDoneWithSource, onViewDocument }: FeedViewProps) {
 
       {loading && <p className="text-sm text-ash">Preparing your rain feed…</p>}
 
-      {items.map((item) => (
-        <div key={item.feed_item_id} data-feed-item-id={item.feed_item_id}>
-          <ChunkCard
-            item={item}
-            showExploreFlag={showExploreFlag}
-            onRated={handleRated}
-            onDoneWithSource={onDoneWithSource}
-            onViewDocument={(selected) =>
-              onViewDocument(
-                selected,
-                items.map((e) => e.content)
-              )
-            }
-          />
+      {items.map((item, idx) => (
+        <div key={item.feed_item_id}>
+          <div data-feed-item-id={item.feed_item_id}>
+            <ChunkCard
+              item={item}
+              showExploreFlag={showExploreFlag}
+              onRated={handleRated}
+              onDoneWithSource={onDoneWithSource}
+              onViewDocument={(selected) =>
+                onViewDocument(
+                  selected,
+                  items.map((e) => e.content)
+                )
+              }
+            />
+          </div>
+
+          {/* Inter-card separator: dot → ↺ reroll from here */}
+          {idx < items.length - 1 && (
+            <RerollSeparator
+              feedItemId={item.feed_item_id}
+              active={activeSeparatorId === item.feed_item_id}
+              rerolling={rerolling}
+              onActivate={() =>
+                setActiveSeparatorId((prev) =>
+                  prev === item.feed_item_id ? null : item.feed_item_id
+                )
+              }
+              onReroll={() => void reroll(item.feed_item_id)}
+            />
+          )}
         </div>
       ))}
 
@@ -253,6 +306,36 @@ export function FeedView({ onDoneWithSource, onViewDocument }: FeedViewProps) {
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
+  )
+}
+
+type RerollSeparatorProps = {
+  feedItemId: string
+  active: boolean
+  rerolling: boolean
+  onActivate: () => void
+  onReroll: () => void
+}
+
+function RerollSeparator({ active, rerolling, onActivate, onReroll }: RerollSeparatorProps) {
+  return (
+    <div className="flex items-center justify-center h-6 group">
+      {active ? (
+        <button
+          onClick={onReroll}
+          disabled={rerolling}
+          className="text-xs text-ash hover:text-sand transition-colors disabled:opacity-50 px-2"
+        >
+          {rerolling ? 'Rerolling…' : '↺ reroll from here'}
+        </button>
+      ) : (
+        <button
+          onClick={onActivate}
+          className="w-1.5 h-1.5 rounded-full bg-ash/20 group-hover:bg-ash/50 transition-colors"
+          aria-label="Reroll from here"
+        />
+      )}
     </div>
   )
 }

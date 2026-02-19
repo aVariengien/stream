@@ -32,11 +32,14 @@ export async function PUT(request: NextRequest) {
 
     const { data, error } = await getSupabase()
       .from('user_settings')
-      .upsert({
-        user_id: session.userId,
-        ...settings,
-        updated_at: new Date().toISOString(),
-      })
+      .upsert(
+        {
+          user_id: session.userId,
+          ...settings,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      )
       .select('*')
       .single()
 
